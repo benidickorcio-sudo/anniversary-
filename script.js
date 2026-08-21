@@ -31,7 +31,7 @@ function playSong() {
                     if (vinyl) vinyl.classList.remove('paused');
                 })
                 .catch(() => {
-                    // If browser policy blocks autoplay, allow user to tap toggle button
+                    // Fallback if browser blocks autoplay
                     if (musicBtn) {
                         musicBtn.classList.remove('hidden');
                         musicBtn.classList.add('paused');
@@ -93,36 +93,42 @@ function initPasswordGate() {
     const errorMsg = document.getElementById('error-message');
     const mainContent = document.getElementById('main-content');
 
+    if (!gateForm || !passInput) return;
+
     // Show/Hide password toggle
-    toggleBtn.addEventListener('click', () => {
-        const isPassword = passInput.getAttribute('type') === 'password';
-        passInput.setAttribute('type', isPassword ? 'text' : 'password');
-        toggleBtn.style.color = isPassword ? 'var(--accent-pink)' : 'var(--text-dim)';
-    });
+    if (toggleBtn) {
+        toggleBtn.addEventListener('click', () => {
+            const isPassword = passInput.getAttribute('type') === 'password';
+            passInput.setAttribute('type', isPassword ? 'text' : 'password');
+            toggleBtn.style.color = isPassword ? 'var(--accent-pink)' : 'var(--text-dim)';
+        });
+    }
 
     const handleUnlock = () => {
         const entered = passInput.value.trim().toLowerCase();
         const target = 'i love you';
 
         if (entered === target) {
-            errorMsg.textContent = '';
+            if (errorMsg) errorMsg.textContent = '';
 
-            // Play audio on valid user interaction
+            // Trigger music
             playSong();
 
-            gateScreen.classList.add('dissolve');
-            mainContent.classList.remove('hidden');
+            if (gateScreen) gateScreen.classList.add('dissolve');
+            if (mainContent) mainContent.classList.remove('hidden');
 
             setTimeout(() => {
-                gateScreen.style.display = 'none';
+                if (gateScreen) gateScreen.style.display = 'none';
                 window.dispatchEvent(new Event('scroll'));
             }, 1100);
 
         } else {
-            errorMsg.textContent = 'Not quite, my love. Try again ♥';
-            gateCard.classList.remove('shake');
-            void gateCard.offsetWidth; // Force reflow
-            gateCard.classList.add('shake');
+            if (errorMsg) errorMsg.textContent = 'Not quite, my love. Try again ♥';
+            if (gateCard) {
+                gateCard.classList.remove('shake');
+                void gateCard.offsetWidth; // Force reflow
+                gateCard.classList.add('shake');
+            }
             passInput.focus();
         }
     };
@@ -286,29 +292,21 @@ function initEnvelopeAndModal() {
 }
 
 /* ==========================================================================
-   5. MEDIA FALLBACKS (NO-CRASH ASSET GUARDS)
+   5. MEDIA FALLBACKS (FIXED: NO AUTOMATIC HIDING)
    ========================================================================== */
 function initAssetFallbacks() {
     const images = document.querySelectorAll('.memory-photo');
     images.forEach((img) => {
-        img.addEventListener('load', () => {
-            img.classList.add('loaded');
-        });
-        img.addEventListener('error', () => {
-            img.style.display = 'none';
-        });
+        img.classList.add('loaded');
+        img.style.display = 'block';
     });
 
     const video = document.getElementById('anniversary-vid');
     const videoWrapper = document.querySelector('.video-outer-frame');
 
     if (video && videoWrapper) {
-        video.addEventListener('canplay', () => {
-            videoWrapper.classList.add('video-loaded');
-        });
-        video.addEventListener('error', () => {
-            video.style.display = 'none';
-        });
+        videoWrapper.classList.add('video-loaded');
+        video.style.display = 'block';
     }
 }
 
@@ -317,7 +315,7 @@ function initAssetFallbacks() {
    ========================================================================== */
 function initSmoothScroll() {
     const links = document.querySelectorAll('a[href^="#"]');
-    links.forEach(link => {
+    links.forEach((link) => {
         link.addEventListener('click', function (e) {
             const targetId = this.getAttribute('href');
             if (targetId && targetId !== '#') {
